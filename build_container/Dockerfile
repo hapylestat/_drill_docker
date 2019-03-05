@@ -1,4 +1,4 @@
-FROM reishin/ambari-build-sandbox:jdk11
+FROM reishin/ambari-build-sandbox:jdk8
 MAINTAINER hapy.lestat@gmail.com
 
 STOPSIGNAL SIGRTMIN+3
