@@ -10,6 +10,9 @@ ENV PROJECT_DIR /root/project
 ENV SANDBOX=/var/lib/sandbox
 
 RUN  mkdir /root/.ssh
+RUN apt-get update &&\
+    install libaio1 libaio-dev &&\
+    apt-get clean
 
 COPY build_container/keys/config /root/.ssh/config
 COPY build_container/keys/known_hosts /root/.ssh/known_hosts
