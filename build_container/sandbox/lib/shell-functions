@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+
+# mvn versions:set-property -Dproperty=revision -DnewVersion
+
+DOCKER=${DOCKER:-}
+
+OUT_DIR=${OUT_DIR:-}
+REPO_URL=${REPO_URL:-}
+RUN_BASH=${RUN_BASH:-}
+BUILD_ARGS=${BUILD_ARGS:-}
+BRANCH=${BRANCH:-}
+PKG_ARCH=${PKG_ARCH:-rpm}
+PROJECT_DIR=${PROJECT_DIR:-}
+VER_MAIN=${VER_MAIN:-}
+VER_BUILD=${VER_BUILD:-}
+PKG_EXTENSION=${PKG_EXTENSION:-rpm}
+VER_S=${VER_S:-}
+VER=${VER:-}
+OUT_PKG_DIR=/tmp/compiled
+PROJECT=${PROJECT:-}
+
+
+help(){
+  cmd_list=`typeset -f|grep '()'|cut -d ' ' -f 1|grep -v "__"|grep -v "help"`
+  echo -e "Available commands: \n ${cmd_list}"
+}
+
+switch_branch(){
+ pushd ${PROJECT_DIR}
+  read -p "Branch name switch to:" branch_name
+  if [[ -z ${branch_name} ]]; then
+    echo "Cancelling, no branch selected"
+    return
+  fi
+
+  echo "Reset current branch state..."
+  git reset --hard HEAD 1>/dev/null 2>&1
+
+  echo "Clean git tree..."
+  git clean -fd 1>/dev/null 2>&1
+
+  echo "Trying to checkout to ${branch_name}.."
+  git checkout ${branch_name} 1>/dev/null 2>&1
+
+  if [ $? -nq 0 ]; then  # do not replace to double squared brackets
+    echo "Fail to checkout, verify branch name"
+  else
+    echo "done"
+  fi
+
+ popd
+}
+
+upload-files(){
+ set -f  # disable asterisk expansion by bash (glob)
+
+ rm -rf ${OUT_PKG_DIR}
+ mkdir ${OUT_PKG_DIR}
+
+ # ToDo: move to configuration?
+ EXCLUDE_FOLDERS="common contrib docs drill-shaded drill-yarn exec logical protocol sample-data"
+ EXCLUDE_FOLDERS_FORMATED=
+
+ for i in ${EXCLUDE_FOLDERS}; do
+   EXCLUDE_FOLDERS_FORMATED="${EXCLUDE_FOLDERS_FORMATED} -not -path */${i}/*"
+ done
+
+ find ${PROJECT_DIR} -name "*.${PKG_EXTENSION}" ${EXCLUDE_FOLDERS_FORMATED} -exec cp -f {} ${OUT_PKG_DIR} \;
+
+ set +f
+
+ echo " ==> Uploading files to bucket \"${BRANCH}\""
+ FILES=${OUT_PKG_DIR}/*
+ for i in ${FILES}; do
+   storage put ${BRANCH} ${i}
+ done
+}
+
+
+build(){
+ echo =======================================================
+ echo Building version "${VER}"
+ echo =======================================================
+ pushd /root  >/dev/null 2>&1
+
+    download-project
+
+   build-project
+   upload-files
+ popd
+}
+
+load-supported-modules(){
+  local modules_to_add=""
+  echo ${modules_to_add}| tr ';' '\n'|while read item; do
+    if [[ -d "${PROJECT_DIR}/${item}" ]]; then
+      echo -n "${item},"
+    fi
+  done
+}
+
+update-repo(){
+ download-project
+ pushd ${PROJECT_DIR} 1>/dev/null 2>&1
+   git pull
+ popd 1>/dev/null 2>&1
+}
+
+build-project(){
+  download-project
+  pushd ${PROJECT_DIR} 1>/dev/null 2>&1
+#  mvn versions:set -DnewVersion=${VER}
+
+  mvn package -DskipTests
+
+  popd 1>/dev/null 2>&1
+}
+
+
+clone-project-repo(){
+ git clone ${REPO_URL} project/
+
+ if [[ $? -ne 0 ]]; then
+   return 1
+ fi
+
+ pushd ${PROJECT_DIR}  1>/dev/null 2>&1
+   git checkout ${BRANCH}
+
+   if [[ $? -ne 0 ]]; then
+     return 1
+   fi
+
+ popd 1>/dev/null 2>&1
+}
+
+
+download-project(){
+  pushd /root  1>/dev/null 2>&1
+    ls ${PROJECT_DIR}/.git 1>/dev/null 2>&1
+
+    if [[ $? -ne 0 ]]; then
+      echo -n "--> Downloading ${PROJECT} repo and checking out ${BRANCH}..."
+      clone-project-repo >/dev/null 2>&1
+      if [[ $? -ne 0 ]]; then
+        echo "Fail"
+        return 1
+      else
+        echo "ok"
+      fi
+    fi
+
+  popd  1>/dev/null 2>&1
+}
+
+
+test-project(){
+download-project
+pushd "${PROJECT_DIR}"
+  mvn package
+popd
+}

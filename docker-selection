@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+
+if [ -f .amsh_settings ]; then
+ . .amsh_settings
+fi
+
+
+docker_menu(){
+set|grep -v "set" | grep "DOCKER=" 1>/dev/null 2>&1
+local is_set=$?
+
+if [ ! -z ${_DOCKER_HOST_SET} ]; then
+  return
+fi
+
+if [ ${is_set} -eq 0 ]; then
+  echo "Select docker host to work with: "
+  local docker_default=${DOCKER_DEFAULT:-1}
+  declare -A DOCKER_LIST
+  local docker_selection=
+  local i=1
+
+   for k in ${!DOCKER[@]}; do
+    DOCKER_LIST[${i}]=${k}
+    if [ "${i}" -eq ${docker_default} ]; then
+      k="${k} *"
+     fi
+     echo "${i}. ${k}"
+
+     i=$((i+1))
+   done
+
+   read -t 5 -p "Choice: " docker_selection
+   echo
+
+   if [ ! -z ${docker_selection} ]; then
+     docker_default=${docker_selection}
+   fi
+
+   local k=${DOCKER_LIST[$docker_default]}
+   echo " --> using ${DOCKER[$k]}"
+
+   export DOCKER_HOST=${DOCKER[$k]}
+   export _DOCKER_HOST_SET=1
+   unset DOCKER_LIST
+else
+  if [ ! -z ${DOCKER_HOST} ]; then
+    echo "--> using system defined docker ${DOCKER_HOST}..."
+  else
+    echo "No configured docker found"
+    exit 1
+  fi
+fi
+}
+
+docker_menu

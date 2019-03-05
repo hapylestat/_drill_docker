@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+. docker-selection
+docker_menu
+
+docker images|grep -e "^<none>"|awk '{print $3}'|xargs docker rmi

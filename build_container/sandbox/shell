@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+RUN_BASH_ENV=${RUN_BASH_ENV:-}
+SANDBOX=${SANDBOX:-}  # comes from Dockerfile
+
+if [[ "x${RUN_BASH_ENV}" == "x" ]]; then
+  export DOCKER=${DOCKER:-}
+  export PROJECT=${PROJECT:-}
+
+  export OUT_DIR=/mnt/vmount/pkgs
+  export REPO_URL=${REPO_URL:-}
+
+  export RUN_BASH=${RUN_BASH:-n}
+  export BUILD_ARGS=${BUILD_ARGS:-}
+  export BRANCH=${BRANCH:-}
+
+  # could be "rpm or jdeb"
+  export PKG_ARCH=${PKG_ARCH:-rpm}
+
+  export PROJECT_DIR=${PROJECT_DIR:-/root/project}
+  export VER_MAIN=${VER_MAIN:-1.0.0.0}
+  export VER_BUILD=${VER_BUILD:-0}
+  export PKG_EXTENSION="rpm"
+
+  if [[ ${PKG_ARCH} == "jdeb" ]]; then
+   export PKG_EXTENSION="deb"
+  fi
+
+  if [[ ${PKG_ARCH} == "tar.gz" ]]; then
+   export PKG_EXTENSION="tar.gz"
+  fi
+
+  export VER_S="${VER_MAIN}"
+  export VER=${VER_MAIN}.${VER_BUILD}
+
+
+  ctrl_c(){
+   popd 1> /dev/null 2>&1
+   echo ' \\\\\\\\\\ USER INTERRUPTED'
+   exit 1
+  }
+
+  finish() {
+   if [[ "x${RUN_BASH}" != "xy" ]]; then
+    echo
+    echo " ///////// END OF BUILD "
+    exit 0
+   else
+    echo
+    echo " ///////// END OF DEBUGGING SHELL"
+   fi
+  }
+
+
+  trap ctrl_c INT
+  trap finish EXIT
+
+
+  # prepare out directories
+  export OUT_PKG_DIR=${OUT_DIR}/${VER}/
+  rm -rf ${OUT_PKG_DIR} 1>/dev/null 2>&1
+  mkdir ${OUT_PKG_DIR} 1>/dev/null 2>&1
+
+  # ==================================temp
+  apt -y install bzip2 >/dev/null 2>&1
+  # ===============================
+else
+  # initializing debug interactive shell
+  cd ~
+  . ${HOME}/.bashrc
+  . ${SANDBOX}/lib/shell-functions
+fi
+
+
+
+if [[ "x${RUN_BASH}" == "xy" ]]; then
+ if [[ "x${RUN_BASH_ENV}" == "x" ]]; then
+cat << EOF
+===/ Welcome to interactive build shell, to get list of available commands type 'help' /===
+PACKAGE_TYPE: ${PKG_ARCH}
+PROJECT_DIR  : ${PROJECT_DIR}
+VERSION     : ${VER}
+BUILD_ARGS  : ${BUILD_ARGS}
+BRANCH:     : ${BRANCH}
+===/////////
+
+EOF
+
+  export RUN_BASH_ENV=y
+  $SHELL --rcfile "$0" -i
+ fi
+else
+ # non-interactive mode, load functions definition
+ . ${SANDBOX}/lib/shell-functions
+ do_build
+fi

@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+#================HOW TO USE===========
+# 1) adjust branch  and pkg_arch (rpm or jdeb)
+# 2) build from current branch:
+#    Target: C:\Windows\System32\bash.exe -i amsh /mnt/c/git/git-project
+#    WorkDir: C:\git\git-project
+#=====================================
+
+
+if [[ -f .amsh_settings ]]; then
+ . .amsh_settings
+else
+ echo "Warning! No settings file found. Please consult with documentation to create one"
+fi
+
+MONGODB_URL=${MONGODB_URL:-}
+
+. docker-selection
+
+ENV_CONTAINER_IMAGE_NAME="${PROJECT}-env"
+ENV_CONTAINER_IMAGE=${ENV_CONTAINER_IMAGE_NAME}:latest
+
+PKG_ARCH=${PKG_ARCH:-rpm}
+BRANCH=${BRANCH:-}
+BUILD_ARGS=${BUILD_ARGS:-}
+VER=${VER:-3.0.0.0}
+BUILD=${BUILD:-0}
+
+USER=${USER:-}
+KEY=${KEY:-}
+REPO_URL=${REPO_URL:-}
+
+M2_CACHE_PATH=${M2_CACHE_PATH:-/var/tmp/.m2}
+
+RUN_BASH=${RUN_BASH:-y}
+
+init_env(){
+ docker stop buildenv 1>/dev/null 2>&1
+ docker rm buildenv 1>/dev/null 2>&1
+
+ mkdir -p /tmp/.m2
+}
+
+
+do_build(){
+ init_env
+ echo "Starting env container...."
+ local random_string=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 5 ; echo '')
+ local container_name="${ENV_CONTAINER_IMAGE_NAME}-${random_string}"
+
+ local title="[docker: $DOCKER_HOST/${container_name}] ${PROJECT} build shell"
+ echo -en "\033]0;${title}\a"
+
+
+ # legacy run flag means that docker container were started by this script, else we will launch bash
+ docker run -it --rm --name ${container_name} --hostname=${container_name} \
+ -e BRANCH="${BRANCH}" \
+ -e PROJECT="${PROJECT}" \
+ -e BUILD_ARGS="${BUILD_ARGS}" \
+ -e VER_MAIN="${VER}" \
+ -e VER_BUILD="${BUILD}" \
+ -e PKG_ARCH="${PKG_ARCH}" \
+ -e RUN_BASH="${RUN_BASH}" \
+ -e REPO_URL="${REPO_URL}" \
+ -e DOCKER="${DOCKER_HOST}" \
+ -v ${M2_CACHE_PATH}:/root/.m2 \
+ ${ENV_CONTAINER_IMAGE} /var/lib/sandbox/shell
+}
+
+
+# $1 git dir
+get_current_branch(){
+  pushd $1 1>/dev/null 2>&1
+  CURR_BRANCH=$(git branch|grep "*"|cut -d " " -f 2)
+  popd 1>/dev/null 2>&1
+}
+
+CMD=$1
+docker_menu
+
+case "${CMD}" in
+  repo)
+    get_current_branch ${CMD}
+    echo "Using repository \"${CMD}\" for current branch information..."
+    export BRANCH=${CURR_BRANCH}
+    do_build
+    ;;
+  *)
+    echo "Using default profile..."
+    do_build
+    ;;
+esac
