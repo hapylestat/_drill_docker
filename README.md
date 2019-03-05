@@ -18,7 +18,6 @@ If you wish to use key file instead and ssh access to github, put you private ke
 `docker build -t project-env build_container`
 
 ##MongoDB
-
 This is document-oriented database. Via gridFS it could store binary files and could be used as tool in scripts, to
 distribute them across containers without any installed ssh/ftp on the host.  All configuration for the server can
 be founded here: `mongo/server`.
@@ -26,8 +25,8 @@ be founded here: `mongo/server`.
 ##How to work with the shell
 When running, shell exposing bash functions as commands, which could be running. For the full available list type inside shell help, or `sandbox/lib/shell-functions` for details. In same manner new functions could be written.
 
-##How to run shell
 
+##How to run shell
 For windows could be created shortcut like:
 Target: %SystemRoot%\system32\bash.exe -i amsh /mnt/e/git/project_stuff/project
 Start In: E:\git\project_stuff\_project_docker
