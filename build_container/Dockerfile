@@ -11,7 +11,7 @@ ENV SANDBOX=/var/lib/sandbox
 
 RUN  mkdir /root/.ssh
 RUN apt-get update &&\
-    install libaio1 libaio-dev &&\
+    apt-get install libaio1 libaio-dev &&\
     apt-get clean
 
 COPY build_container/keys/config /root/.ssh/config

@@ -9,6 +9,7 @@ if [[ "x${RUN_BASH_ENV}" == "x" ]]; then
 
   export OUT_DIR=/mnt/vmount/pkgs
   export REPO_URL=${REPO_URL:-}
+  export MAVEN_URL=${MAVEN_URL:-}
 
   export RUN_BASH=${RUN_BASH:-n}
   export BUILD_ARGS=${BUILD_ARGS:-}

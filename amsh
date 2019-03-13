@@ -30,6 +30,7 @@ BUILD=${BUILD:-0}
 USER=${USER:-}
 KEY=${KEY:-}
 REPO_URL=${REPO_URL:-}
+MAVEN_URL=${MAVEN_URL:-}
 
 M2_CACHE_PATH=${M2_CACHE_PATH:-/var/tmp/.m2}
 
@@ -64,6 +65,7 @@ do_build(){
  -e RUN_BASH="${RUN_BASH}" \
  -e REPO_URL="${REPO_URL}" \
  -e DOCKER="${DOCKER_HOST}" \
+ -e MAVEN_URL="${MAVEN_URL}" \
  -v ${M2_CACHE_PATH}:/root/.m2 \
  ${ENV_CONTAINER_IMAGE} /var/lib/sandbox/shell
 }
