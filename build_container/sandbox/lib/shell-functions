@@ -21,6 +21,9 @@ OUT_PKG_DIR=/tmp/compiled
 PROJECT=${PROJECT:-}
 
 
+git config --global user.email "me@nxa.io"
+git config --global user.name "BuilderBot"
+
 help(){
   cmd_list=`typeset -f|grep '()'|cut -d ' ' -f 1|grep -v "__"|grep -v "help"`
   echo -e "Available commands: \n ${cmd_list}"
@@ -152,6 +155,31 @@ download-project(){
     fi
 
   popd  1>/dev/null 2>&1
+}
+
+publish_artifacts(){
+  pushd /root 1>/dev/null 2>&1
+    local artifacts_dir="_artifacts"
+    local depbranch="art-${BRANCH}"
+    rm -rf "${artifacts_dir}"
+
+    git clone ${MAVEN_URL} ${artifacts_dir}
+    pushd "${artifacts_dir}" 1>/dev/null 2>&1
+      git branch -D ${depbranch} 1>/dev/null 2>&1
+      git checkout -b "${depbranch}"
+    popd 1>/dev/null 2>&1
+
+    download-project
+    pushd "${PROJECT_DIR}" 1>/dev/null 2>&1
+      mvn deploy -DskipTests -DaltDeploymentRepository=snapshot-repo::default::file:"/root/${artifacts_dir}"
+    popd 1>/dev/null 2>&1
+
+    pushd "${artifacts_dir}" 1>/dev/null 2>&1
+      git add .
+      git commit -am "Artifacts for project ${PROJECT} on branch \"${BRANCH}\" as \"${depbranch}\""
+      git push --force origin "${depbranch}"
+    popd 1>/dev/null 2>&1
+  popd 1>/dev/null 2>&1
 }
 
 
