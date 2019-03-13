@@ -175,6 +175,10 @@ publish_artifacts(){
     popd 1>/dev/null 2>&1
 
     pushd "${artifacts_dir}" 1>/dev/null 2>&1
+      local dist=$(find . -name distribution)
+      if [ -d "${dist}" ]; then
+        rm -rf ${dist}
+      fi
       git add .
       git commit -am "Artifacts for project ${PROJECT} on branch \"${BRANCH}\" as \"${depbranch}\""
       git push --force origin "${depbranch}"

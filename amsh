@@ -7,6 +7,8 @@
 #    WorkDir: C:\git\git-project
 #=====================================
 
+CMD=$1
+ARG_REPO=$2
 
 if [[ -f .amsh_settings ]]; then
  . .amsh_settings
@@ -78,13 +80,12 @@ get_current_branch(){
   popd 1>/dev/null 2>&1
 }
 
-CMD=$1
 docker_menu
 
 case "${CMD}" in
   repo)
-    get_current_branch ${CMD}
-    echo "Using repository \"${CMD}\" for current branch information..."
+    get_current_branch ${ARG_REPO}
+    echo "Using repository \"${ARG_REPO}\" for current branch information..."
     export BRANCH=${CURR_BRANCH}
     do_build
     ;;
