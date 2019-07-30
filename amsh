@@ -16,7 +16,7 @@ else
  echo "Warning! No settings file found. Please consult with documentation to create one"
 fi
 
-MONGODB_URL=${MONGODB_URL:-}
+STORAGE_URL=${STORAGE_URL:-}
 
 . docker-selection
 
@@ -25,6 +25,7 @@ ENV_CONTAINER_IMAGE=${ENV_CONTAINER_IMAGE_NAME}:latest
 
 PKG_ARCH=${PKG_ARCH:-rpm}
 BRANCH=${BRANCH:-}
+CALCITE_BRANCH=${CALCITE_BRANCH:-}
 BUILD_ARGS=${BUILD_ARGS:-}
 VER=${VER:-3.0.0.0}
 BUILD=${BUILD:-0}
@@ -32,7 +33,7 @@ BUILD=${BUILD:-0}
 USER=${USER:-}
 KEY=${KEY:-}
 REPO_URL=${REPO_URL:-}
-MAVEN_URL=${MAVEN_URL:-}
+CALCITE_URL=${CALCITE_URL:-}
 
 M2_CACHE_PATH=${M2_CACHE_PATH:-/var/tmp/.m2}
 
@@ -67,9 +68,12 @@ do_build(){
  -e RUN_BASH="${RUN_BASH}" \
  -e REPO_URL="${REPO_URL}" \
  -e DOCKER="${DOCKER_HOST}" \
- -e MAVEN_URL="${MAVEN_URL}" \
+ -e CALCITE_URL="${CALCITE_URL}" \
+ -e CALCITE_BRANCH="${CALCITE_BRANCH}" \
  -v ${M2_CACHE_PATH}:/root/.m2 \
  ${ENV_CONTAINER_IMAGE} /var/lib/sandbox/shell
+
+# -v /home/lestat/projects/drill:/root/project \
 }
 
 

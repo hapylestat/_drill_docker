@@ -9,11 +9,12 @@ if [[ "x${RUN_BASH_ENV}" == "x" ]]; then
 
   export OUT_DIR=/mnt/vmount/pkgs
   export REPO_URL=${REPO_URL:-}
-  export MAVEN_URL=${MAVEN_URL:-}
+  export CALCITE_URL=${CALCITE_URL:-}
 
   export RUN_BASH=${RUN_BASH:-n}
   export BUILD_ARGS=${BUILD_ARGS:-}
   export BRANCH=${BRANCH:-}
+  export CALCITE_BRANCH=${CALCITE_BRANCH:-}
 
   # could be "rpm or jdeb"
   export PKG_ARCH=${PKG_ARCH:-rpm}
@@ -72,10 +73,7 @@ else
   . ${SANDBOX}/lib/shell-functions
 fi
 
-
-
-if [[ "x${RUN_BASH}" == "xy" ]]; then
- if [[ "x${RUN_BASH_ENV}" == "x" ]]; then
+__info(){
 cat << EOF
 ===/ Welcome to interactive build shell, to get list of available commands type 'help' /===
 PACKAGE_TYPE: ${PKG_ARCH}
@@ -83,10 +81,21 @@ PROJECT_DIR  : ${PROJECT_DIR}
 VERSION     : ${VER}
 BUILD_ARGS  : ${BUILD_ARGS}
 BRANCH:     : ${BRANCH}
+CALCITE_BRANCH: ${CALCITE_BRANCH}
 ===/////////
 
 EOF
+}
 
+
+if [[ "x${RUN_BASH}" == "xy" ]]; then
+ if [[ "x${RUN_BASH_ENV}" == "x" ]]; then
+  grep "/var/lib/sandbox/shell" ~/.bashrc 1>/dev/null 2>&1
+  if [[ $? -eq 1 ]]; then
+    echo -e "\n/var/lib/sandbox/shell" >> ~/.bashrc
+  fi
+
+  __info
   export RUN_BASH_ENV=y
   $SHELL --rcfile "$0" -i
  fi
